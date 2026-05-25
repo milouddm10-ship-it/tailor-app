@@ -8,8 +8,8 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
         body { font-family: 'Tajawal', sans-serif; }
-       .hidden { display: none!important; }
-       .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+      .hidden { display: none!important; }
+      .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
         input[type="file"] { display: none; }
     </style>
 </head>
@@ -21,12 +21,15 @@ const state = {
     userType: 'client',
     orders: JSON.parse(localStorage.getItem('tailorOrders') || '[]'),
     measurements: JSON.parse(localStorage.getItem('measurements') || '{}'),
+    tailorPass: localStorage.getItem('tailorPass') || null,
+    isTailorAuth: false,
     currentOrderId: null
 };
 
 function saveState() {
     localStorage.setItem('tailorOrders', JSON.stringify(state.orders));
     localStorage.setItem('measurements', JSON.stringify(state.measurements));
+    if(state.tailorPass) localStorage.setItem('tailorPass', state.tailorPass);
 }
 
 function render() {
@@ -42,13 +45,47 @@ function render() {
             </div>
         </div>
         <div class="max-w-4xl mx-auto p-4">
-            ${state.userType === 'client'? renderClient() : renderTailor()}
+            ${state.userType === 'client'? renderClient() : (state.isTailorAuth? renderTailor() : renderTailorLogin())}
         </div>
     `;
 }
 
 function switchUser(type) {
+    if(type === 'tailor') {
+        if(!state.tailorPass) {
+            let newPass = prompt('تعيين كلمة سر للخياط لأول مرة:');
+            if(!newPass) return;
+            state.tailorPass = newPass;
+            state.isTailorAuth = true;
+            saveState();
+        } else {
+            let pass = prompt('ادخل كلمة سر الخياط:');
+            if(pass!== state.tailorPass) { alert('كلمة السر خطأ'); return; }
+            state.isTailorAuth = true;
+        }
+    }
     state.userType = type;
+    if(type === 'client') state.isTailorAuth = false;
+    render();
+}
+
+function renderTailorLogin() {
+    return `<div class="bg-white rounded-xl p-8 text-center text-gray-500">يجب ادخال كلمة السر للدخول كخياط</div>`;
+}
+
+function changeTailorPassword() {
+    let oldPass = prompt('ادخل كلمة السر الحالية:');
+    if(oldPass!== state.tailorPass) { alert('كلمة السر الحالية خطأ'); return; }
+    let newPass = prompt('ادخل كلمة السر الجديدة:');
+    if(!newPass) return;
+    state.tailorPass = newPass;
+    saveState();
+    alert('تم تغيير كلمة السر بنجاح');
+}
+
+function tailorLogout() {
+    state.isTailorAuth = false;
+    state.userType = 'client';
     render();
 }
 
@@ -206,7 +243,13 @@ function submitOrder() {
 function renderTailor() {
     return `
         <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
-            <h2 class="font-bold text-lg">طلبات العملاء</h2>
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="font-bold text-lg">طلبات العملاء</h2>
+                <div class="flex gap-2">
+                    <button onclick="changeTailorPassword()" class="text-xs bg-gray-200 px-3 py-1 rounded-lg">تغيير كلمة السر</button>
+                    <button onclick="tailorLogout()" class="text-xs bg-red-100 text-red-600 px-3 py-1 rounded-lg">تسجيل خروج</button>
+                </div>
+            </div>
             <p class="text-sm text-gray-500">إجمالي: ${state.orders.length} طلب</p>
         </div>
         ${state.orders.length === 0? 
@@ -246,7 +289,7 @@ function viewOrder(id) {
             <div class="bg-white rounded-xl shadow-sm p-4">
                 <h3 class="font-bold mb-3">الحالة</h3>
                 <span class="px-3 py-1 rounded-full text-sm ${getStatusColor(order.status)}">${order.status}</span>
-                ${state.userType === 'tailor' && order.status!== 'مكتمل'? `
+                ${state.userType === 'tailor' && state.isTailorAuth && order.status!== 'مكتمل'? `
                     <div class="mt-4 flex gap-2">
                         <select id="statusUpdate" class="flex-1 border rounded-lg p-2">
                             <option>قيد المراجعة</option>
@@ -259,7 +302,7 @@ function viewOrder(id) {
                 ` : ''}
             </div>
 
-            ${state.userType === 'tailor' && order.status === 'جديد'? `
+            ${state.userType === 'tailor' && state.isTailorAuth && order.status === 'جديد'? `
                 <div class="bg-white rounded-xl shadow-sm p-4">
                     <h3 class="font-bold mb-3">تحديد السعر والموعد</h3>
                     <input type="number" id="price" placeholder="السعر بالريال" class="w-full border rounded-lg p-3 mb-2">
