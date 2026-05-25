@@ -52,6 +52,10 @@
         <img id="preview" class="hidden w-full h-48 object-cover rounded mb-3">
         
         <input id="notes" type="text" placeholder="ملاحظات إضافية" class="w-full p-3 border rounded mb-3">
+        const CONFIG = {
+    tailorEmail: 'milouddm10@gmail.com',
+    tailorPass: 'miloud.dm'
+};
         tailorEmail: 'milouddm10@gmail.com',
 tailorPass: 'miloud.dm'
             <div id="btn-loader" class="loader hidden"></div>
@@ -72,7 +76,7 @@ tailorPass: 'miloud.dm'
 </div>
 
 <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas'e-app.js';
     import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
